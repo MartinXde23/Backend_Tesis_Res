@@ -4,37 +4,41 @@ import ModuloUsuario from "../modules/ModuloUsuario.js";
 import ModuloCategorias from "../modules/ModuloCategorias.js";
 
 const crearOferta = async (req, res) => {
-    const { precioPorDia, precioPorHora, servicio, descripcion, servicios } = req.body;
-    const usuario = await ModuloUsuario.findById(req.usuarioBDD._id)
+    const { precioPorDia, precioPorHora, servicio, descripcion, servicios } = req.body
     const io = req.app.get('io')
-
-    if (usuario.cantidadOfertas === 0) {
-        return res.status(403).json({ msg: "Has alcanzado el límite de ofertas." });
-    }
-
-    const categoria = await ModuloCategorias.findOne({nombre:servicio});
-    if(!categoria) return res.status(404).json({ msg: "Categoría no encontrada." });
     try {
-        if (Object.values(req.body).includes("")) return res.status(400).json({ msg: "Lo sentimos, debe llenar todo los campos." })
+        if (Object.values(req.body).includes("")) return res.status(400).json({ msg: "Todos los campos son obligatorios" })
+
+        const usuario = await ModuloUsuario.findById(req.usuarioBDD._id)
+        if (usuario.cantidadOfertas <= 0) return res.status(403).json({ msg: "No tienes ofertas disponibles" })
+
+        const categoria = await ModuloCategorias.findOne({ nombre: servicio })
+        if (!categoria) return res.status(404).json({ msg: "Categoría no encontrada" })
 
         const nuevaOferta = new ModeloOfertas({
-            proveedor: req.usuarioBDD._id,
             precioPorDia,
             precioPorHora,
             servicio,
             descripcion,
-            servicios
+            servicios,
+            proveedor: req.usuarioBDD._id
         })
 
         await nuevaOferta.save()
-        res.status(200).json({ msg: "Oferta creada correctamente.", oferta: nuevaOferta })
 
         usuario.cantidadOfertas -= 1
         categoria.suscripciones += 1
         await categoria.save()
         await usuario.save()
+        
         const ofertaPop = await ModeloOfertas.findById(nuevaOferta._id).populate('proveedor', 'nombre apellido email f_perfil monedasTrabajos promedioProveedor')
-        io.emit('Nueva-Oferta', { ofertaPop })
+        
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Nueva-Oferta', { ofertaPop })
+        }
+
+        res.status(200).json({ msg: "Oferta creada correctamente.", oferta: nuevaOferta })
 
     } catch (error) {
         console.log(error)
@@ -75,11 +79,15 @@ const actualizarOferta = async (req, res) => {
         ofertaActual.servicio = servicio || ofertaActual.servicio
         ofertaActual.descripcion = descripcion || ofertaActual.descripcion
         ofertaActual.servicios = servicios || ofertaActual.servicios
-        io.emit('Actualizar-oferta', { id, ofertaActual })
-        io.emit('Actualizacion', { id, ofertaActual })
+        
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Actualizar-oferta', { id, ofertaActual })
+            io.emit('Actualizacion', { id, ofertaActual })
+        }
+        
         await ofertaActual.save()
         res.status(200).json({ msg: "Oferta actualizada correctamente", ofertaActual })
-
 
     } catch (error) {
         console.log(error)
@@ -99,8 +107,12 @@ const eliminarOferta = async (req, res) => {
 
         if (oferta.proveedor._id.toString() !== req.usuarioBDD._id.toString()) return res.status(404).json({ msg: "No tienes permisos para eliminar esta oferta" })
 
-        io.emit('Oferta-eliminada', { id, oferta })
-        io.emit('Eliminacion', { id })
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Oferta-eliminada', { id, oferta })
+            io.emit('Eliminacion', { id })
+        }
+        
         await oferta.deleteOne();
         usuario.cantidadOfertas += 1;
 

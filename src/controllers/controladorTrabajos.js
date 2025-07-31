@@ -31,8 +31,12 @@ const crearTrabajo = async (req, res) => {
             .populate('proveedor', 'nombre apellido email f_perfil')
             .populate('oferta', 'servicio precioPorDia precioPorHora descripcion')
 
-        io.emit('Nueva-solicitud', { trabajoActual })
-        res.status(200).json({ msg: "Trabajo creado con exito" })
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Nueva-solicitud', { trabajoActual })
+        }
+        
+        res.status(200).json({ msg: "Trabajo creado con exito", trabajo })
     } catch (error) {
         console.log(error)
         res.status(500).json({ msg: "Error al crear el trabajo" })
@@ -127,7 +131,10 @@ const actualizarTrabajo = async (req, res) => {
         trabajo.calificacionProveedor = req.body.calificacionProveedor || trabajo.calificacionProveedor
         const trabajoActualizado = await trabajo.save()
 
-        io.emit('Trabajo-actualizado', { id, trabajoActualizado })
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Trabajo-actualizado', { id, trabajoActualizado })
+        }
         res.status(200).json({
             msg: "Trabajo actualizado correctamente",
             trabajoActualizado
@@ -149,7 +156,10 @@ const eliminarTrabajo = async (req, res) => {
             .populate('oferta', 'servicio precioPorDia precioPorHora descripcion')
         if (!trabajo) return res.status(404).json({ msg: "Trabajo no encontrado" })
 
-        io.emit('Trabajo-eliminado', { id, trabajo })
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Trabajo-eliminado', { id, trabajo })
+        }
         await trabajo.deleteOne()
         res.status(200).json({ msg: "Trabajo eliminado correctamente" })
     } catch (error) {
@@ -182,8 +192,11 @@ const agendarTrabajo = async (req, res) => {
         const ofertaResp = await ModeloOfertas.findById(trabajoActualizado.oferta._id)
             .populate('proveedor', 'nombre apellido monedasTrabajos f_perfil')
 
-        io.emit('Trabajo-agendado', { id, trabajoActualizado })
-        io.emit('Remover-oferta', { ofertaResp })
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Trabajo-agendado', { id, trabajoActualizado })
+            io.emit('Remover-oferta', { ofertaResp })
+        }
 
         res.status(200).json({
             msg: "Has aceptado la solicitud",
@@ -209,7 +222,10 @@ const rechazarTrabajo = async (req, res) => {
 
         trabajo.status = "Rechazado";
         const trabajoActualizado = await trabajo.save();
-        io.emit('Trabajo-rechazado', { id, trabajoActualizado })
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Trabajo-rechazado', { id, trabajoActualizado })
+        }
         res.status(200).json({
             msg: "Has rechazado la solicitud",
             trabajoActualizado
@@ -242,8 +258,11 @@ const cancelarTrabajo = async (req, res) => {
 
         const ofertaResp = await ModeloOfertas.find({proveedor: proveedor})
             .populate('proveedor', 'nombre apellido monedasTrabajos promedioProveedor f_perfil')
-        io.emit('Trabajo-cancelado', { id, trabajoActualizado })
-        io.emit('Restablecer-oferta', { ofertaResp })
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Trabajo-cancelado', { id, trabajoActualizado })
+            io.emit('Restablecer-oferta', { ofertaResp })
+        }
         res.status(200).json({
             msg: "Has cancelado el trabajo",
             trabajoActualizado
@@ -284,7 +303,10 @@ const calificarProveedor = async (req, res) => {
         trabajo.calificacionProveedor = calificacionProveedor
         trabajo.status = "Completado"
 
-        io.emit('Trabajo-completado', { id, trabajo })
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Trabajo-completado', { id, trabajo })
+        }
         await trabajo.save()
         await usuario.save()
         res.status(200).json({ msg: "Calificación enviada" })
@@ -323,7 +345,10 @@ const calificarCliente = async (req, res) => {
         }
         trabajo.calificacionCliente = calificacionCliente;
         trabajo.status = "Completado"
-        io.emit('Trabajo-completado-prov', { id, trabajo })
+        // Verificar si io está disponible antes de usarlo
+        if (io) {
+            io.emit('Trabajo-completado-prov', { id, trabajo })
+        }
         await trabajo.save()
         await usuario.save()
         res.status(200).json({ msg: "Calificación enviada" })

@@ -10,7 +10,9 @@ const CrearCategoria = async (req, res) => {
         const cat = new ModuloCategorias(req.body)
         await cat.save()
 
-        io.emit('nuevaCategoria', {cat})
+        if (io) {
+            io.emit('nuevaCategoria', {cat})
+        }
         res.status(200).json({msg:"Categoría creada"})
     } catch (error) {
         res.status(404).json({msg:error})
@@ -25,7 +27,9 @@ const EliminarCategoría = async (req, res) =>{
     try {
         const cat = await ModuloCategorias.findByIdAndDelete(id)
         if(!cat) return res.status(404).json({msg:"No existe la categoría"})
-        io.emit('Categoria eliminada', {id})
+        if (io) {
+            io.emit('Categoria eliminada', {id})
+        }
         res.status(200).json({msg:"Categoría eliminada"})
     } catch (error) {
         res.status(404).json({msg:error})

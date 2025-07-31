@@ -118,10 +118,10 @@ const ConfirmarRecuperarContrasenia = async (req, res) => {
 
 
 const detalleUsuario = async (req, res) => {
-    const { id } = req.params
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({ msg: `Lo sentimos, debe ser un id válido` });
-    const UsuarioBDD = await ModuloUsuario.findById(id).select("-password")
-    if (!UsuarioBDD) return res.status(404).json({ msg: `Lo sentimos, no existe el Usuario ${id}` })
+    const { _id } = req.usuarioBDD
+    if (!mongoose.Types.ObjectId.isValid(_id)) return res.status(404).json({ msg: `Lo sentimos, debe ser un id válido` });
+    const UsuarioBDD = await ModuloUsuario.findById(_id).select("-contrasenia")
+    if (!UsuarioBDD) return res.status(404).json({ msg: `Lo sentimos, no existe el Usuario ${_id}` })
     res.status(200).json({ msg: UsuarioBDD })
 }
 
@@ -188,6 +188,7 @@ const SubidaFoto = async (req, res) => {
         res.status(200).json({ msg: 'Foto subida' })
     } catch (error) {
         console.log('Hubo un error al subir la imagen', error)
+        res.status(500).json({ msg: 'Error al subir la imagen' })
     }
 }
 
@@ -215,6 +216,7 @@ const verificarFoto = async (req, res) => {
         if (foto !== null) return res.status(200).json({ msg: 'Si' })
     } catch (error) {
         console.log('Error al intentar conectarse al servidor')
+        res.status(500).json({ msg: 'Error al verificar foto' })
     }
 }
 
@@ -228,6 +230,7 @@ const verificarUbicacionActual = async (req, res) => {
         if (ubicacion !== null) return res.status(200).json({ msg: 'Si' })
     } catch (error) {
         console.log('Error al intentar conectarse al servidor')
+        res.status(500).json({ msg: 'Error al verificar ubicación actual' })
     }
 }
 
@@ -241,6 +244,7 @@ const verificarUbicacionTrabajo = async (req, res) => {
         if (ubicacion !== null) return res.status(200).json({ msg: 'Si' })
     } catch (error) {
         console.log('Error al intentar conectarse al servidor')
+        res.status(500).json({ msg: 'Error al verificar ubicación trabajo' })
     }
 }
 
@@ -257,6 +261,7 @@ const obtenerUbicacion = async (req, res) => {
         res.status(200).json({ ubiActual, desencriptado })
     } catch (error) {
         console.log('Error al intentar conectarse al servidor')
+        res.status(500).json({ msg: 'Error al obtener ubicación' })
     }
 }
 

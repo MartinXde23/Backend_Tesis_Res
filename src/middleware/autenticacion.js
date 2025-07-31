@@ -12,7 +12,7 @@ const verificarAutenticacion = async (req, res, next) => {
             next()
         }
         else if (rol === "usuario") {
-            req.usuarioBDD = await Usuario.findById(id).lean().select("-contrasenia")
+            req.usuarioBDD = await Usuario.findById(id).select("-contrasenia")
             next()
         }
         else {

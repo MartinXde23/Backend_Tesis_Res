@@ -41,18 +41,23 @@ const login = async (req, res) => {
     try {
         if (Object.values(req.body).includes("")) return res.status(400).json({ msg: "Lo sentimos, debe llenar todos los campos" })
 
-        const userAd = await ModuloUsuario.findOne({ email })
-        const comparacion = await userAd.CompararPasswordUsuario(contrasenia);
+        const adminBDD = await ModeloAdmin.findOne({ email })
+        if (!adminBDD) return res.status(403).json({ msg: "Lo sentimos, el administrador no se encuentra registrado" })
+        
+        if (adminBDD?.confirmEmail == false) return res.status(400).json({ msg: "Lo sentimos, debe verificar su cuenta" })
+        
+        const comparacion = await adminBDD.CompararContra(contrasenia);
 
         if(comparacion) {
-            const token = generarJWT(userAd._id, 'administrador');
-            const {_id} = userAd
+            const token = generarJWT(adminBDD._id, 'administrador');
+            const {_id} = adminBDD
             res.status(200).json({ token, _id, rol: 'administrador' });
         }else{
             res.status(404).json({ msg: "Credenciales incorrectas" })
         }
     } catch (error) {
         console.error(error)
+        res.status(500).json({ msg: "Error en el servidor" })
     }
 }
 
@@ -130,6 +135,7 @@ const SubidaFoto = async (req, res) => {
         res.status(200).json({ msg: 'Imagen guardada' })
     } catch (error) {
         console.log('Hubo un error al subir la imagen', error)
+        res.status(500).json({ msg: 'Error al subir la imagen' })
     }
 }
 
@@ -220,6 +226,7 @@ const eliminarUsuario = async (req, res) => {
         res.status(200).json({ msg: "Usuario eliminado" })
     } catch (error) {
         console.log("Error al eliminar al usuario", error)
+        res.status(500).json({ msg: "Error al eliminar usuario" })
     }
 }
 
